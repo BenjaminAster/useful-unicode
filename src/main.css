@@ -1,0 +1,64 @@
+
+:root {
+	/* font-family: "Segoe UI Emoji", "Segoe UI Symbol", system-ui, sans-serif; */
+	font-family: "Segoe UI Symbol", "Segoe UI Emoji", "Segoe UI", system-ui, sans-serif;
+	/* font-family: "Segoe UI Symbol", system-ui, sans-serif; */
+	/* font-family: system-ui, sans-serif; */
+	/* font-family: system-ui, "Segoe UI Symbol", "Segoe UI Emoji", sans-serif; */
+	/* font-family: system-ui, sans-serif; */
+	/* font-size-adjust: cap-height from-font; */
+	overflow-wrap: break-word;
+	line-height: 1.5;
+	--text: light-dark(black, white);
+	color: var(--text);
+	background-color: light-dark(white, #111);
+	scrollbar-color: light-dark(#ccc, #333) transparent;
+	scrollbar-width: thin;
+	interpolate-size: allow-keywords;
+	-webkit-text-size-adjust: none;
+	text-size-adjust: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+:root {
+	color-scheme: light only;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark only;
+	}
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	min-block-size: 100dvb;
+	margin: 0;
+	padding-top: env(safe-area-inset-top, 0px);
+	padding-right: env(safe-area-inset-right, 0px);
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+	padding-left: env(safe-area-inset-left, 0px);
+}
+
+a, button, input, textarea {
+	all: unset;
+	cursor: revert;
+	outline: revert;
+	appearance: revert;
+}
+
+a {
+	text-decoration-line: underline;
+}
+
+button {
+	display: inline flow-root;
+	cursor: pointer;
+}
+
+textarea {
+	display: block;
+	white-space-collapse: preserve;
+}
