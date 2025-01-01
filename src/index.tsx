@@ -1,5 +1,6 @@
 
 import { css, type Config as WinzigConfig } from "winzig";
+import { controlCharacterMappings, blocks, nonPrintableCharacters } from "./constants.ts";
 
 winzigConfig: ({
 	output: "../",
@@ -11,84 +12,12 @@ winzigConfig: ({
 
 const title = "Useful Unicode";
 
-const controlCharacterMappings = new Map([
-	[0x00, "\u2400"],
-	[0x01, "\u2401"],
-	[0x02, "\u2402"],
-	[0x03, "\u2403"],
-	[0x04, "\u2404"],
-	[0x05, "\u2405"],
-	[0x06, "\u2406"],
-	[0x07, "\u2407"],
-	[0x08, "\u2408"],
-	[0x09, "\u2409"],
-	[0x0A, "\u240A"],
-	[0x0B, "\u240B"],
-	[0x0C, "\u240C"],
-	[0x0D, "\u240D"],
-	[0x0E, "\u240E"],
-	[0x0F, "\u240F"],
-	[0x10, "\u2410"],
-	[0x11, "\u2411"],
-	[0x12, "\u2412"],
-	[0x13, "\u2413"],
-	[0x14, "\u2414"],
-	[0x15, "\u2415"],
-	[0x16, "\u2416"],
-	[0x17, "\u2417"],
-	[0x18, "\u2418"],
-	[0x19, "\u2419"],
-	[0x1A, "\u241A"],
-	[0x1B, "\u241B"],
-	[0x1C, "\u241C"],
-	[0x1D, "\u241D"],
-	[0x1E, "\u241E"],
-	[0x1F, "\u241F"],
-	[0x7F, "\u2421"],
-]);
+const ucd = new Set((
+	await (await fetch("https://unicode.org/Public/draft/UCD/ucd/UnicodeData.txt")).text()
+	// await (await fetch("https://unicode.org/Public/UCD/latest/ucd/UnicodeData.txt")).text()
+	// await (await fetch("https://unicode.org/Public/12.0.0/ucd/UnicodeData.txt")).text()
+).split("\n").map(line => parseInt(line.split(";")[0], 16)));
 
-const blocks = [
-	0x00,
-	0x01,
-	0x02,
-	0x03,
-	0x04,
-	0x1D,
-	0x1E,
-	0x20,
-	0x21,
-	0x22,
-	0x23,
-	0x24,
-	0x25,
-	0x26,
-	0x27,
-	0x28,
-	0x29,
-	0x2A,
-	0x2B,
-	// 0x2C,
-	// 0x2D,
-	// 0x2E,
-	// 0x30,
-	0xFE,
-	0xFF,
-	0x1D1,
-	0x1D4,
-	0x1D5,
-	0x1D6,
-	0x1D7,
-	0x1F0,
-	0x1F1,
-	0x1F3,
-	0x1F4,
-	0x1F5,
-	0x1F6,
-	0x1F7,
-	0x1F8,
-	0x1F9,
-	0x1FA,
-];
 
 const Tables = () => {
 	const ul = <ul>
@@ -102,7 +31,7 @@ const Tables = () => {
 				list-style: none;
 				display: grid;
 				grid-template-columns: repeat(4, auto);
-				gap: .2rem;
+				gap: 3px;
 				/* justify-content: start; */
 				/* grid-auto-flow: row; */
 				/* inline-size: fit-content; */
@@ -113,7 +42,7 @@ const Tables = () => {
 	</ul>;
 
 	for (const block of blocks) {
-		// for (let block = 0x0; block < 0x200; ++block) {
+		// for (let block = 0x0; block < 0xF00; ++block) {
 		const tHead = <thead></thead>;
 		const tBody = <tbody></tbody>;
 		{
@@ -126,6 +55,10 @@ const Tables = () => {
 							color: light-dark(white, black);
 							background-color: light-dark(black, white);
 						}
+
+						.excluded & {
+							background-color: red;
+						}
 					`}
 				</th>
 			</tr>;
@@ -134,21 +67,26 @@ const Tables = () => {
 			}
 			tHead.append(tr);
 		}
+		let containsUnicodeCharacters = false;
 		for (let i = 0; i < 0x10; ++i) {
 			const tr = <tr><th>{(block * 0x10 + i).toString(16).toUpperCase()}</th></tr>;
 			for (let j = 0; j < 0x10; ++j) {
 				const codePoint = block * 0x100 + i * 0x10 + j;
-				tr.append(<td>{
-					controlCharacterMappings.get(codePoint)
-					?? (String.fromCodePoint(codePoint) + (codePoint > 0x2122 ? "\uFE0F" : ""))
-					// ?? String.fromCodePoint(codePoint)
-				}</td>);
+				tr.append(
+					ucd.has(codePoint)
+						? (containsUnicodeCharacters = true, <td>{
+							controlCharacterMappings.get(codePoint)
+							?? (String.fromCodePoint(codePoint) + (codePoint > 0x2122 ? "\uFE0F" : ""))
+							// ?? String.fromCodePoint(codePoint)
+						}</td>)
+						: <td class="unused-code-point"></td>
+				);
 			}
 			tBody.append(tr);
 		}
-		ul.append(
-			// <table class:excluded={!blocks.includes(block)}>
-			<table>
+		if (containsUnicodeCharacters) ul.append(
+			<table class:excluded={!blocks.includes(block)}>
+				{/* <table> */}
 				{tHead}
 				{tBody}
 				{css`
@@ -163,10 +101,6 @@ const Tables = () => {
 						/* outline: 1px solid light-dark(black, white); */
 						/* outline-offset: -1px; */
 					}
-
-					/* &.excluded {
-						color: light-dark(darkRed, red);
-					} */
 
 					td, th {
 						/* border: 1px solid light-dark(#bbb, #444); */
@@ -206,6 +140,11 @@ const Tables = () => {
 						background-color: light-dark(#eeeeee, #222222);
 					}
 
+					.unused-code-point::before {
+						content: "X";
+						color: red;
+					}
+
 					/* thead > tr > th:is(:nth-child(8n + 6), :nth-child(8n + 7), :nth-child(8n + 8), :nth-child(8n + 9)),
 					tbody > tr:is(:nth-child(8n + 5), :nth-child(8n + 6), :nth-child(8n + 7), :nth-child(8n + 8)) > th,
 					tbody > tr:is(:nth-child(8n + 1), :nth-child(8n + 2), :nth-child(8n + 3), :nth-child(8n + 4)) > td:is(:nth-child(8n + 2), :nth-child(8n + 3), :nth-child(8n + 4), :nth-child(8n + 5)),
@@ -224,7 +163,8 @@ const Tables = () => {
 						background-color: light-dark(#eee, #222);
 					} */
 				`}
-			</table>);
+			</table>
+		);
 	}
 
 	return ul;
@@ -239,20 +179,35 @@ const Tables = () => {
 		<main>
 			<Tables />
 
+			<h2>Non-printable characters:</h2>
+
+			<ul>
+				{...nonPrintableCharacters.map(([codePoint, name]) =>
+					<li><code>{codePoint}</code>: {name}</li>
+				)}
+
+				{css`
+					& {
+						line-height: 1.2;
+						padding: 0;
+						margin: 0;
+						list-style: none;
+						columns: 4;
+						font-size: .6rem;
+					}
+				`}
+			</ul>
+
 			{css`
 				& {
 					/* padding-inline: 1rem; */
 					flex-grow: 1;
 				}
 
-				.link {
-					color: light-dark(brown, sandybrown);
-					text-decoration-line: underline;
-				}
-
-				code {
-					background-color: light-dark(#ddd, #333);
-					padding-inline: .3em;
+				h2 {
+					font-size: .9rem;
+					font-weight: normal;
+					margin-block: 1rem .5rem;
 				}
 			`}
 		</main>
