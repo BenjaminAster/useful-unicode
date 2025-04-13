@@ -193,6 +193,7 @@ const Tables = () => {
 						margin: 0;
 						list-style: none;
 						columns: 4;
+						column-gap: 3px;
 						font-size: .6rem;
 					}
 				`}
